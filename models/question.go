@@ -8,6 +8,8 @@ type User struct {
 	ID uint `json:"id" gorm:"primaryKey"`
 	Name string `json:"name" gorm:"not null"`
     Mail string `json:"gmail" gorm:"not null"`
+    Team string `json:"team_name" gorm:"not null"`
+    Points int `json:"points" gorm:"default:0"`
 }
 
 func (user *User) Save() (*User, error) {
