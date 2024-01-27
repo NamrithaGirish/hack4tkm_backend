@@ -18,6 +18,8 @@ import (
 	router.GET("/other-users/:id", controllers.GetUsersList)
 	router.GET("/question/:id", controllers.GetQuestion)
 	router.GET("/answers/:uid/:qid", controllers.GetAnswers)
+	router.GET("/all-participants", controllers.GetAllParticipants)
+	router.POST("/update-points/:uid", controllers.PointsDecrement)
 
 
 	router.Run(":8080")

@@ -166,3 +166,38 @@ func GetAnswers(context *gin.Context){
     utils.DB.Where("user_id = ? AND q_id = ?", user_id, question_id).Find(&answers)
     context.JSON(http.StatusOK, answers)
 }
+
+//Admin functions
+func GetAllParticipants(context *gin.Context){
+    var participants []models.User
+    utils.DB.Where("team <> 'coordinator'").Find(&participants)
+    context.JSON(http.StatusOK, participants)
+}
+
+type RequestBody struct {
+	Points int `json:"points"`
+}
+
+func PointsDecrement(context *gin.Context){
+    var requestBody RequestBody
+	if err := context.ShouldBindJSON(&requestBody); err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+    points := requestBody.Points
+    user_id, err := strconv.ParseUint(context.Param("uid"), 10, 64)
+    if err!=nil{
+        context.JSON(http.StatusBadRequest, gin.H{"error":err.Error})
+        return
+    }
+    var user_profile models.User
+    result := utils.DB.First(&user_profile, user_id)
+    if result.Error!=nil {
+        context.JSON(http.StatusBadRequest, gin.H{"error":"User not found"})
+        return
+    }
+    user_profile.Points = user_profile.Points - points
+    utils.DB.Save(&user_profile)
+
+    context.JSON(http.StatusOK, user_profile)
+}
