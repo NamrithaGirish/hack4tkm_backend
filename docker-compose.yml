@@ -1,6 +1,26 @@
 version: "3"
 
 services:
+  go-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.go-app.rule=Host(`backend.hack4tkm.live`)"
+      - "traefik.http.routers.go-app.entrypoints=web"
+      - "traefik.http.routers.go-app.middlewares=redirect-to-https"
+      - "traefik.http.routers.go-app-secure.rule=Host(`backend.hack4tkm.live`)"
+      - "traefik.http.routers.go-app-secure.entrypoints=websecure"
+      - "traefik.http.routers.go-app-secure.tls=true"
+      - "traefik.http.services.go-app.loadbalancer.server.port=8080"
+    depends_on:
+      - postgres
+
   postgres:
     image: postgres
     container_name: postgres
@@ -8,7 +28,27 @@ services:
       - 6500:5432
     env_file:
       - ./.env
+
+  traefik:
+    image: traefik
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesResolvers.letsencrypt.acme.httpChallenge.entryPoint=web"
+      - "--certificatesResolvers.letsencrypt.acme.email=tech@tkmce.ac.in" # Email change
+      - "--certificatesResolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
-      - postgres:/var/lib/postgresql/data
-volumes:
-  postgres:
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
