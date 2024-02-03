@@ -20,4 +20,4 @@ ENV PORT=8000
 EXPOSE 8000
 
 # Command to run the application
-CMD ["HACK4TKM"]  
+CMD ["hack4tkm"]  
