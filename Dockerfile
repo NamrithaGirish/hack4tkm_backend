@@ -14,10 +14,10 @@ RUN go get -d -v ./...
 RUN go install -v ./...
 
 # Set environment variables
-ENV PORT=8000
+ENV PORT=8080
 
 # Expose port 8080 to the outside world
-EXPOSE 8000
+EXPOSE 8080
 
 # Command to run the application
 CMD ["hack4tkm"]  
