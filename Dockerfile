@@ -20,4 +20,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Command to run the application
-CMD ["HACK4TKM"]  
+CMD ["hack4tkm"]  

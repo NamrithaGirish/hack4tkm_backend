@@ -25,9 +25,11 @@ services:
     image: postgres
     container_name: postgres
     ports:
-      - 6500:5432
-    env_file:
-      - ./.env
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: me@not&post
+      POSTGRES_USER: postgres # Optional: Set a custom superuser username
+      POSTGRES_DB: hack4tkm
 
   traefik:
     image: traefik
@@ -51,4 +53,4 @@ services:
 
 networks:
   web:
-    external: true
+    external: false

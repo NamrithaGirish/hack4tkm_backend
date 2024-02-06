@@ -12,7 +12,7 @@ func init() {
 }
 
 func main() {
-	utils.DB.AutoMigrate(&models.User{},&models.Question{},&models.Answer{})
+	utils.DB.AutoMigrate(&models.User{},&models.Comments{})
 	fmt.Println("? Migration complete")
 }
 

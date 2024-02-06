@@ -43,7 +43,7 @@ func ConnectDB() {
 	godotenv.Load(".env")
 	var err error
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Shanghai", os.Getenv("HOST"), os.Getenv("USER"), os.Getenv("PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("PORT"))
-
+	
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		fmt.Println("Failed to connect to the Database")
