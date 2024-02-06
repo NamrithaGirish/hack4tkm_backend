@@ -41,7 +41,7 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--certificatesResolvers.letsencrypt.acme.httpChallenge.entryPoint=web"
-      - "--certificatesResolvers.letsencrypt.acme.email=tech@tkmce.ac.in" # Email change
+      - "--certificatesResolvers.letsencrypt.acme.email=iedc@tkmce.ac.in" # Email change
       - "--certificatesResolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
