@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "8000:8000"
     env_file:
       - ./.env
     labels:
@@ -17,7 +17,7 @@ services:
       - "traefik.http.routers.go-app-secure.rule=Host(`backend.hack4tkm.live`)"
       - "traefik.http.routers.go-app-secure.entrypoints=websecure"
       - "traefik.http.routers.go-app-secure.tls=true"
-      - "traefik.http.services.go-app.loadbalancer.server.port=8080"
+      - "traefik.http.services.go-app.loadbalancer.server.port=8000"
     depends_on:
       - postgres
 
@@ -25,11 +25,9 @@ services:
     image: postgres
     container_name: postgres
     ports:
-      - 5432:5432
-    environment:
-      POSTGRES_PASSWORD: me@not&post
-      POSTGRES_USER: postgres # Optional: Set a custom superuser username
-      POSTGRES_DB: hack4tkm
+      - 6500:5432
+    env_file:
+      - ./.env
 
   traefik:
     image: traefik
@@ -53,4 +51,4 @@ services:
 
 networks:
   web:
-    external: false
+    external: true

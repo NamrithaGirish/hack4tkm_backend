@@ -7,6 +7,6 @@ import (
 
 // InitializeRoutes sets up all routes for the application
 func Routes(router *gin.Engine) {
-	router.POST("/add-question", controllers.AddQuestion)
+	// router.POST("/add-question", controllers.AddQuestion)
 	router.POST("/add-user", controllers.AddUser)
 }
