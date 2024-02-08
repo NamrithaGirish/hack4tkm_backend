@@ -9,15 +9,6 @@ services:
       - "8000:8000"
     env_file:
       - ./.env
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.go-app.rule=Host(`backend.hack4tkm.live`)"
-      - "traefik.http.routers.go-app.entrypoints=web"
-      - "traefik.http.routers.go-app.middlewares=redirect-to-https"
-      - "traefik.http.routers.go-app-secure.rule=Host(`backend.hack4tkm.live`)"
-      - "traefik.http.routers.go-app-secure.entrypoints=websecure"
-      - "traefik.http.routers.go-app-secure.tls=true"
-      - "traefik.http.services.go-app.loadbalancer.server.port=8000"
     depends_on:
       - postgres
 
@@ -25,30 +16,23 @@ services:
     image: postgres
     container_name: postgres
     ports:
-      - 6500:5432
+      - 5432:5432
     env_file:
       - ./.env
 
   traefik:
+    build:
+      context: .
+      dockerfile: ./traefik/Dockerfile
     image: traefik
     container_name: traefik
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
-      - "--providers.docker.exposedByDefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesResolvers.letsencrypt.acme.httpChallenge.entryPoint=web"
-      - "--certificatesResolvers.letsencrypt.acme.email=iedc@tkmce.ac.in" # Email change
-      - "--certificatesResolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--configFile=/etc/traefik/traefik.yml"
     ports:
-      - "80:80"
-      - "443:443"
+      - "0.0.0.0:80:80"
+      - "0.0.0.0:443:443"
     volumes:
       - ./letsencrypt:/letsencrypt
-    networks:
-      - web
-
-networks:
-  web:
-    external: true
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml
