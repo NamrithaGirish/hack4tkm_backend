@@ -6,7 +6,17 @@ import (
     "net/http"
     "github.com/NamrithaGirish/hack4tkm/utils"
     "strconv"
+    "github.com/joho/godotenv"
+    "context"
+    // "io/ioutil"
+    "fmt"
+    "os"
 	
+    
+    "github.com/aws/aws-sdk-go-v2/aws"
+    "github.com/aws/aws-sdk-go-v2/config"
+    "github.com/aws/aws-sdk-go-v2/service/s3"
+    "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 )
 
 func AddUser(context *gin.Context) {
@@ -63,15 +73,45 @@ func CommentEnable(receiver_id uint, sender_id uint) bool {
     }
 }
 
-func AddComment(context *gin.Context) {
+func AddComment(c *gin.Context) {
 
     var input models.Comments
 
-    if err := context.ShouldBindJSON(&input); err != nil {
-        context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+    if err := c.ShouldBindJSON(&input); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
+    
     if (CommentEnable(input.ReceiverID, input.SenderID)){
+        //Uploading file to s3
+
+        godotenv.Load(".aws")
+        cfg, err := config.LoadDefaultConfig(context.TODO())
+        if err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not start connection"})
+            return
+        }
+
+        client := s3.NewFromConfig(cfg)
+        uploader := manager.NewUploader(client)
+        fmt.Println("client created")
+        uploadFile, err:=os.Open(input.Image)
+        if err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not open file"})
+            return
+        }
+        result, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
+            Bucket: aws.String(os.Getenv("AWS_BUCKET_NAME")),
+            Key:    aws.String("hack4tkm/"+strconv.FormatUint(uint64(input.SenderID), 10)+"_"+strconv.FormatUint(uint64(input.ReceiverID), 10)+".jpg"),
+            Body:   uploadFile,
+        })
+            
+        if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }
+
+        input.Image=result.Location
         comment := models.Comments{
             Comment: input.Comment,
             LinkedinUrl: input.LinkedinUrl,
@@ -84,19 +124,19 @@ func AddComment(context *gin.Context) {
         savedComment, err := comment.Save()
     
         if err != nil {
-            context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
             return
         }
         var user models.User
         if err := utils.DB.First(&user, input.SenderID).Error; err != nil {
-            context.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user"})
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user"})
             return
         }
         user.Points = user.Points+10
         utils.DB.Save(&user)
-        context.JSON(http.StatusCreated, gin.H{"comment": savedComment})
+        c.JSON(http.StatusCreated, gin.H{"comment": savedComment})
     } else{
-        context.JSON(http.StatusBadRequest, gin.H{"error": "Cannot add more than one comment"})
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot add more than one comment"})
     }
 }
 
