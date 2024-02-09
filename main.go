@@ -19,6 +19,6 @@ import (
 	router.GET("/comments/:name", controllers.DisplayComments)
 	router.GET("/leaderboard", controllers.Leaderboard)
 
-	router.Run(":8080")
+	router.Run(":8000")
  
  }
