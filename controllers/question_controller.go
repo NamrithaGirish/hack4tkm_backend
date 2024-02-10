@@ -29,7 +29,7 @@ func AddUser(context *gin.Context) {
 
     user := models.User{
         Name: input.Name,
-        ID: input.ID,
+        // ID: input.ID,
         Mail: input.Mail,
         Team: input.Team,
     }
@@ -46,7 +46,7 @@ func AddUser(context *gin.Context) {
 
 func GetAllTeams(context *gin.Context) {
     var teams []string
-    result:=utils.DB.Model(&models.User{}).Select("team").Group("team").Find(&teams)
+    result:=utils.DB.Model(&models.User{}).Select("team").Where("team <> 'coordinator'").Group("team").Find(&teams)
     if result.Error != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
 	}
@@ -54,13 +54,13 @@ func GetAllTeams(context *gin.Context) {
 }
 
 func GetTeamMembers(context *gin.Context) {
-    var names []string
+    var names []models.User
     team:=context.Param("team")
-    result:=utils.DB.Model(&models.User{}).Select("name").Where("team = ?",team).Find(&names)
+    result:=utils.DB.Where("team = ?",team).Find(&names)
     if result.Error != nil {
         context.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
 	}
-	context.JSON(http.StatusOK, gin.H{"names": names})
+	context.JSON(http.StatusOK, gin.H{"members": names})
 }
 
 func CommentEnable(receiver_id uint, sender_id uint) bool {
@@ -76,14 +76,39 @@ func CommentEnable(receiver_id uint, sender_id uint) bool {
 func AddComment(c *gin.Context) {
 
     var input models.Comments
-
-    if err := c.ShouldBindJSON(&input); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+    input.Comment = c.PostForm("comment")
+    input.LinkedinUrl=c.PostForm("linkedin_url")
+    // input.Image=c.PostForm("image"),
+    s_id, err:=strconv.ParseUint(c.PostForm("sender_id"), 10, 64)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not start connection"})
         return
     }
+    input.SenderID=uint(s_id)
+    r_id, err:=strconv.ParseUint(c.PostForm("receiver_id"), 10, 64)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not start connection"})
+        return
+    }
+    input.ReceiverID=uint(r_id)
+    // id, err:=strconv.ParseUint(c.PostForm("id"), 10, 64)
+    // if err != nil {
+    //     c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not start connection"})
+    //     return
+    // }
+    // input.ID=uint(id)
+    // fmt.Println(c.PostForm()+"KLL")
+    // fmt.Printf("%T",c.PostForm())
+
+    // if err := c.Bind(&input); err != nil {
+    //     fmt.Println(input)
+    //     c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+    //     return
+    // }
     
     if (CommentEnable(input.ReceiverID, input.SenderID)){
         //Uploading file to s3
+
 
         godotenv.Load(".aws")
         cfg, err := config.LoadDefaultConfig(context.TODO())
@@ -95,15 +120,23 @@ func AddComment(c *gin.Context) {
         client := s3.NewFromConfig(cfg)
         uploader := manager.NewUploader(client)
         fmt.Println("client created")
-        uploadFile, err:=os.Open(input.Image)
+        file, err:=c.FormFile("image")
         if err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not open file"})
             return
         }
+        mimeType := file.Header.Get("Content-Type")
+        uploadFile, err:= file.Open()
+        if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+            return
+        }        
+
         result, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
             Bucket: aws.String(os.Getenv("AWS_BUCKET_NAME")),
             Key:    aws.String("hack4tkm/"+strconv.FormatUint(uint64(input.SenderID), 10)+"_"+strconv.FormatUint(uint64(input.ReceiverID), 10)+".jpg"),
             Body:   uploadFile,
+            ContentType: aws.String(mimeType),
         })
             
         if err != nil {
@@ -118,7 +151,6 @@ func AddComment(c *gin.Context) {
             Image:input.Image,
             SenderID: input.SenderID,
             ReceiverID: input.ReceiverID,
-            ID: input.ID,
         }
     
         savedComment, err := comment.Save()
@@ -173,11 +205,29 @@ func GetUserById(context *gin.Context) {
     context.JSON(http.StatusOK, user_profile)
 
 }
+
+func GetUserByMail(context *gin.Context) {
+    user_mail := context.Param("mail")
+
+    var user_profile models.User
+    result := utils.DB.Where("mail = ?",user_mail).First(&user_profile)
+    if result.Error!=nil {
+        context.JSON(http.StatusBadRequest, gin.H{"error":"User not found"})
+        return
+    }
+    if user_profile.Team=="coordinator" {
+        context.JSON(http.StatusOK, gin.H{"coordinator":true})
+        return 
+    }
+    context.JSON(http.StatusOK, gin.H{"coordinator":false})
+
+}
+
 func Leaderboard(context *gin.Context) {
 	var users []models.User
 
 	// Query the database to get the first five users with the maximum points
-	err := utils.DB.Order("points desc").Limit(5).Find(&users).Error
+	err := utils.DB.Where("team <> 'coordinator'").Order("points desc").Limit(5).Find(&users).Error
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -185,3 +235,44 @@ func Leaderboard(context *gin.Context) {
 
 	context.JSON(http.StatusOK, users)
 }
+
+func DeleteComment(context *gin.Context){
+    comment_id, err := strconv.ParseUint(context.Param("comment_id"), 10, 64)
+    if err != nil {
+        context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid comment ID"})
+        return
+    }
+    var comment models.Comments
+    result := utils.DB.First(&comment, comment_id)
+    if result.Error != nil {
+        context.JSON(http.StatusNotFound, gin.H{"error": "Comment not found"})
+        return
+    }
+    if err := utils.DB.Delete(&comment).Error; err != nil {
+        context.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete comment"})
+        return
+    }
+
+    context.JSON(http.StatusOK, comment)
+}
+
+func DeleteUser(context *gin.Context){
+    user_id, err := strconv.ParseUint(context.Param("user_id"), 10, 64)
+    if err != nil {
+        context.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+        return
+    }
+    var user models.User
+    result := utils.DB.First(&user, user_id)
+    if result.Error != nil {
+        context.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+        return
+    }
+    if err := utils.DB.Delete(&user).Error; err != nil {
+        context.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+        return
+    }
+
+    context.JSON(http.StatusOK, user)
+}
+

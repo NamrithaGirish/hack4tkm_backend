@@ -6,7 +6,7 @@ import(
 )
 
 type User struct {
-	ID uint `json:"id" gorm:"primaryKey"`
+	ID uint `json:"id" gorm:"primaryKey;autoIncrement"`
 	Name string `json:"name" gorm:"not null"`
     Mail string `json:"gmail" gorm:"not null"`
     Team string `json:"team_name" gorm:"not null"`
@@ -23,12 +23,12 @@ func (user *User) Save() (*User, error) {
 
 
 type Comments struct{
-	ID uint `json:"id" gorm:"primaryKey"`
-	Comment string `json:"comment" gorm:"not null"`
-    LinkedinUrl string `json:"linkedin_url"`
-    Image string `gorm:"column:image" json:"image"`
-	SenderID uint `json:"sender_id" gorm:"not null"`
-	ReceiverID uint `json:"receiver_id" gorm:"not null"`
+	ID uint `json:"id" gorm:"primaryKey;autoIncrement" form:"id"`
+	Comment string `json:"comment" gorm:"not null" form:"comment"`
+    LinkedinUrl string `json:"linkedin_url" form:"linkedin_url"`
+    Image string `gorm:"column:image" json:"image" form:"image"`
+	SenderID uint `json:"sender_id" gorm:"not null" form:"sender_id"`
+	ReceiverID uint `json:"receiver_id" gorm:"not null" form:"receiver_id"`
 	Sender User `gorm:"foreignKey:SenderID"`
 	Receiver User `gorm:"foreignKey:ReceiverID"`
 }

@@ -18,6 +18,9 @@ import (
 	router.POST("/comments", controllers.AddComment)
 	router.GET("/comments/:name", controllers.DisplayComments)
 	router.GET("/leaderboard", controllers.Leaderboard)
+	router.GET("/delete-comment/:comment_id", controllers.DeleteComment)
+	router.GET("/delete-user/:user_id", controllers.DeleteUser)
+	router.GET("/login/:mail", controllers.GetUserByMail)
 
 	router.Run(":8000")
  
