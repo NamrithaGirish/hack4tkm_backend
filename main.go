@@ -1,6 +1,8 @@
 package main
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/cors"
+
 	// "net/http"
 	"github.com/NamrithaGirish/hack4tkm/controllers"
 	"github.com/NamrithaGirish/hack4tkm/utils"
@@ -11,6 +13,15 @@ import (
 	//route.SetTrustedProxies([]string{"192.168.1.2"}) //to trust only a specific value
 	utils.ConnectDB()
 	router := gin.Default()
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12, // Maximum age in seconds
+	}))
+
 	router.POST("/add-user", controllers.AddUser)
 	router.GET("/profile/:id", controllers.GetUserById)
 	router.GET("/all-teams", controllers.GetAllTeams)
