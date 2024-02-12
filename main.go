@@ -15,8 +15,8 @@ import (
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
-		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowMethods:     []string{"GET", "POST"},
+		AllowHeaders:     []string{"Content-Type", "Authorization", "ngrok-skip-browser-warning"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12, // Maximum age in seconds
@@ -27,7 +27,7 @@ import (
 	router.GET("/all-teams", controllers.GetAllTeams)
 	router.GET("/all-members/:team", controllers.GetTeamMembers)
 	router.POST("/comments", controllers.AddComment)
-	router.GET("/comments/:name", controllers.DisplayComments)
+	router.GET("/comments/:id", controllers.DisplayComments)
 	router.GET("/leaderboard", controllers.Leaderboard)
 	router.GET("/delete-comment/:comment_id", controllers.DeleteComment)
 	router.GET("/delete-user/:user_id", controllers.DeleteUser)

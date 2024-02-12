@@ -179,10 +179,26 @@ func FindUserID(name string) uint{
     return user.ID
 }
 
+//name as parameter
+// func DisplayComments(context *gin.Context) {
+//     var comments []models.Comments
+//     name:=context.Param("name")
+//     result:=utils.DB.Where("receiver_id = ?",FindUserID(name)).Find(&comments)
+
+//     if result.Error != nil {
+// 		context.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
+// 	}
+// 	context.JSON(http.StatusOK, comments)
+// }
+
 func DisplayComments(context *gin.Context) {
+    user_id, err := strconv.ParseUint(context.Param("id"), 10, 64)
+    if err!=nil{
+        context.JSON(http.StatusBadRequest, gin.H{"error":"Incorrect user ID"})
+        return
+    }
     var comments []models.Comments
-    name:=context.Param("name")
-    result:=utils.DB.Where("receiver_id = ?",FindUserID(name)).Find(&comments)
+    result:=utils.DB.Where("receiver_id = ?",user_id).Find(&comments)
 
     if result.Error != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": result.Error})
@@ -202,7 +218,19 @@ func GetUserById(context *gin.Context) {
         context.JSON(http.StatusBadRequest, gin.H{"error":"User not found"})
         return
     }
-    context.JSON(http.StatusOK, user_profile)
+    var sent_comments []models.Comments
+    result = utils.DB.Where("sender_id = ?",user_id).Find(&sent_comments)
+    if result.Error!=nil {
+        context.JSON(http.StatusBadRequest, gin.H{"error":"Could not fetch sent comments"})
+        return
+    }
+    var received_comments []models.Comments
+    result = utils.DB.Where("receiver_id = ?",user_id).Find(&received_comments)
+    if result.Error!=nil {
+        context.JSON(http.StatusBadRequest, gin.H{"error":"Could not fetch received comments"})
+        return
+    }
+    context.JSON(http.StatusOK, gin.H{"user":user_profile,"sent":sent_comments,"received":received_comments})
 
 }
 
@@ -219,7 +247,7 @@ func GetUserByMail(context *gin.Context) {
         context.JSON(http.StatusOK, gin.H{"coordinator":true})
         return 
     }
-    context.JSON(http.StatusOK, gin.H{"coordinator":false})
+    context.JSON(http.StatusOK, gin.H{"user":user_profile})
 
 }
 
