@@ -16,7 +16,7 @@ RUN go install -v ./...
 # Set environment variables
 ENV PORT=8000
 
-# Expose port 8080 to the outside world
+# Expose port 8000 to the outside world
 EXPOSE 8000
 
 # Command to run the application

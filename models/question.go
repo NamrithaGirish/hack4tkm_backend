@@ -6,11 +6,12 @@ import(
 )
 
 type User struct {
-	ID uint `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name string `json:"name" gorm:"not null"`
-    Mail string `json:"gmail" gorm:"not null"`
-    Team string `json:"team_name" gorm:"not null"`
-    Points int `json:"points" gorm:"default:0"`
+	ID uint `json:"id" gorm:"primaryKey;autoIncrement" form:"id"`
+	Name string `json:"name" gorm:"not null" form:"name"`
+    Image string `gorm:"column:image" json:"image" form:"image"`
+    Mail string `json:"gmail" gorm:"not null" form:"gmail"`
+    Team string `json:"team_name" gorm:"not null" form:"team_name"`
+    Points int `json:"points" gorm:"default:0" form:"points"`
 }
 
 func (user *User) Save() (*User, error) {
@@ -39,22 +40,19 @@ func (comment *Comments) Save() (*Comments, error) {
     }
     return comment, nil
 }
-// func isImageURL(fl validator.FieldLevel) bool {
-// 	value := fl.Field().String()
 
-// 	// Perform validation logic
-// 	if strings.HasSuffix(strings.ToLower(value), ".jpg") || strings.HasSuffix(strings.ToLower(value), ".jpeg") || strings.HasSuffix(strings.ToLower(value), ".png") || strings.HasSuffix(strings.ToLower(value), ".gif") {
-// 		return true
-// 	}
+// type Credentials struct{
+//     ID uint `json:"id" gorm:"primaryKey;autoIncrement" form:"id"`
+//     UserID uint `json:"user_id" gorm:"not null" form:"user_id"`
+//     Username string `json:"username" gorm:"not null" form:"username"`
+//     Password string `json:"password" gorm:"not null" form:"password"`
+//     User User `gorm:"foreignKey:UserID"`
 
-// 	return false
 // }
-
-// func isValidURL(fl validator.FieldLevel) bool {
-// 	value := fl.Field().String()
-
-// 	// Regular expression for a simple URL validation
-// 	urlPattern := regexp.MustCompile(`^(http|https):\/\/[^\s/$.?#].[^\s]*$`)
-
-// 	return urlPattern.MatchString(value)
+// func (credential *Credentials) Save() (*Credentials, error) {
+//     err := utils.DB.Create(&credential).Error
+//     if err != nil {
+//         return &Credentials{}, err
+//     }
+//     return credential, nil
 // }

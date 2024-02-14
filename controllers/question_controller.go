@@ -11,6 +11,7 @@ import (
     // "io/ioutil"
     "fmt"
     "os"
+    "strings"
 	
     
     "github.com/aws/aws-sdk-go-v2/aws"
@@ -35,6 +36,17 @@ func AddUser(context *gin.Context) {
     }
 
     savedUser, err := user.Save()
+    // // fmt.Printf("%T\n",savedUser)
+    // // fmt.Println(savedUser)
+    // custom_password:=strings.ReplaceAll(strings.ToLower(savedUser.Name)," ","_")
+    // // fmt.Println(custom_password)
+    // // fmt.Println(savedUser.ID)
+    // credentials := models.Credentials{
+    //     Username:input.Mail,
+    //     Password:custom_password,
+    //     UserID:savedUser.ID,
+    // }
+    // savedCredential, err := credentials.Save()
 
     if err != nil {
         context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -134,7 +146,7 @@ func AddComment(c *gin.Context) {
 
         result, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
             Bucket: aws.String(os.Getenv("AWS_BUCKET_NAME")),
-            Key:    aws.String("hack4tkm/"+strconv.FormatUint(uint64(input.SenderID), 10)+"_"+strconv.FormatUint(uint64(input.ReceiverID), 10)+".jpg"),
+            Key:    aws.String("hack4tkm/comments/"+strconv.FormatUint(uint64(input.SenderID), 10)+"_"+strconv.FormatUint(uint64(input.ReceiverID), 10)+".jpg"),
             Body:   uploadFile,
             ContentType: aws.String(mimeType),
         })
@@ -247,6 +259,12 @@ func GetUserByMail(context *gin.Context) {
         context.JSON(http.StatusOK, gin.H{"coordinator":true})
         return 
     }
+    // var user_credentials models.Credentials
+    // result = utils.DB.Where("user_id = ?",user_profile.ID).First(&user_credentials)
+    // if result.Error!=nil {
+    //     context.JSON(http.StatusBadRequest, gin.H{"error":"User not found"})
+    //     return
+    // }
     context.JSON(http.StatusOK, gin.H{"user":user_profile})
 
 }
@@ -304,3 +322,82 @@ func DeleteUser(context *gin.Context){
     context.JSON(http.StatusOK, user)
 }
 
+
+// func Login(context *gin.Context){
+//     var input models.Credentials 
+
+//     // Extract username and password from request body
+//     if err := context.ShouldBindJSON(&input); err != nil {
+//         context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+//         return
+//     }
+//     var user_credentials models.Credentials
+//     result:=utils.DB.Where("username = ? and password = ?",input.Username,input.Password).Find(&user_credentials)
+//     if result.Error != nil {
+//         context.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+//         return
+//     }
+//     context.JSON(http.StatusOK, gin.H{"message": "Login successful","user_id":user_credentials.UserID})
+
+// }
+
+func UpdatePhoto(c *gin.Context) {
+    user_id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+        return
+    }
+    var user_profile models.User
+    result := utils.DB.First(&user_profile, user_id)
+    if result.Error!=nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error":"User not found"})
+        return
+    }
+
+    godotenv.Load(".aws")
+    cfg, err := config.LoadDefaultConfig(context.TODO())
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not start connection"})
+        return
+    }
+
+    client := s3.NewFromConfig(cfg)
+    uploader := manager.NewUploader(client)
+    fmt.Println("client created")
+    file, err:=c.FormFile("image")
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not read file from input"})
+        return
+    }
+    mimeType := file.Header.Get("Content-Type")
+    uploadFile, err:= file.Open()
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }        
+
+    resultAWS, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
+        Bucket: aws.String(os.Getenv("AWS_BUCKET_NAME")),
+        Key:    aws.String("hack4tkm/profile/"+strings.ToLower(strings.ReplaceAll(user_profile.Name," ","_"))+".jpg"),
+        Body:   uploadFile,
+        ContentType: aws.String(mimeType),
+    })
+        
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    fmt.Println(user_profile.Image)
+	if user_profile.Image ==""{
+        fmt.Println("Adding new Image")
+        user_profile.Image = resultAWS.Location
+        utils.DB.Save(&user_profile)
+    }
+    c.JSON(http.StatusOK, gin.H{"message": "User photo updated successfully","user":user_profile})
+
+	// if found {
+	// 	c.JSON(http.StatusOK, gin.H{"message": "User photo updated successfully"})
+	// } else {
+	// 	c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
+	// }
+}

@@ -15,12 +15,13 @@ import (
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST"},
+		AllowMethods:     []string{"GET", "POST","PUT"},
 		AllowHeaders:     []string{"Content-Type", "Authorization", "ngrok-skip-browser-warning"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12, // Maximum age in seconds
 	}))
+	// router.Use(sessions.Sessions())  //Add password check sessions
 
 	router.POST("/add-user", controllers.AddUser)
 	router.GET("/profile/:id", controllers.GetUserById)
@@ -32,6 +33,7 @@ import (
 	router.GET("/delete-comment/:comment_id", controllers.DeleteComment)
 	router.GET("/delete-user/:user_id", controllers.DeleteUser)
 	router.GET("/login/:mail", controllers.GetUserByMail)
+	router.PUT("/update/:id",controllers.UpdatePhoto)
 
 	router.Run(":8000")
  
