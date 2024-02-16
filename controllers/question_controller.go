@@ -389,7 +389,7 @@ func UpdatePhoto(c *gin.Context) {
         return
     }
     fmt.Println(user_profile.Image)
-	if user_profile.Image ==""{
+	if user_profile.Image =="https://iedcbackend.s3.us-west-1.amazonaws.com/hack4tkm/head_contact.png"{
         fmt.Println("Adding new Image")
         user_profile.Image = resultAWS.Location
         utils.DB.Save(&user_profile)
