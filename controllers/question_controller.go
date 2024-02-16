@@ -33,6 +33,7 @@ func AddUser(context *gin.Context) {
         // ID: input.ID,
         Mail: input.Mail,
         Team: input.Team,
+        Image: "https://iedcbackend.s3.us-west-1.amazonaws.com/hack4tkm/head_contact.png",
     }
 
     savedUser, err := user.Save()
