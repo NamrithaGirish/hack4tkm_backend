@@ -31,11 +31,6 @@ import (
 	"fmt"
    )
 
-// func ConnectDatabase()  {
-//    dsn := "host=localhost user=postgres password=me@not&post dbname=hack4tkm port=5432 sslmode=disable TimeZone=Asia/Mumbai"
-//    db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-//    return db
-//    }
 
 var DB *gorm.DB
 
